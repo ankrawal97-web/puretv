@@ -1,0 +1,36 @@
+name: Build custom PureTV Android TV
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'app-tv/**'
+      - 'core/**'
+      - 'gradle/**'
+      - '*.gradle.kts'
+      - '.github/workflows/build-custom-tv.yml'
+permissions:
+  contents: read
+jobs:
+  build-tv:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - uses: android-actions/setup-android@v3
+      - name: Make Gradle executable
+        run: chmod +x gradlew
+      - name: Build Android TV debug APK
+        run: ./gradlew :app-tv:assembleDebug --stacktrace
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: PureTV-Custom-TV-debug
+          path: app-tv/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
