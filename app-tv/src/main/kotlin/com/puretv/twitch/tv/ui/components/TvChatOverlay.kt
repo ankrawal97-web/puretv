@@ -53,6 +53,17 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+/** Floating overlay geometry; can be wired to DataStore and TV settings controls. */
+enum class FloatingChatPosition { TOP_LEFT, TOP_RIGHT, BOTTOM_LEFT, BOTTOM_RIGHT, CENTER_RIGHT }
+
+private fun FloatingChatPosition.toAlignment(): Alignment = when (this) {
+    FloatingChatPosition.TOP_LEFT -> Alignment.TopStart
+    FloatingChatPosition.TOP_RIGHT -> Alignment.TopEnd
+    FloatingChatPosition.BOTTOM_LEFT -> Alignment.BottomStart
+    FloatingChatPosition.BOTTOM_RIGHT -> Alignment.BottomEnd
+    FloatingChatPosition.CENTER_RIGHT -> Alignment.CenterEnd
+}
+
 private val ClockFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
 /**
@@ -86,6 +97,11 @@ fun TvChatOverlay(
     beside: Boolean = false,
     /** Settings > Chat background: how solid the panel and its rows are (0.4 to 1). */
     opacity: Float = 0.85f,
+    /** Width in dp; intended range 180..520. */
+    floatingWidthDp: Int = 300,
+    /** Height fraction; intended range 0.25..0.95. */
+    floatingHeightFraction: Float = 0.55f,
+    floatingPosition: FloatingChatPosition = FloatingChatPosition.BOTTOM_RIGHT,
 ) {
     val c = PureTvTvTheme.colors
     val shapes = PureTvTvTheme.shapes
@@ -116,12 +132,12 @@ fun TvChatOverlay(
         // corners of the panel below actually show their rounding.
         Box(
             modifier = if (beside) Modifier.fillMaxHeight().padding(24.dp) else Modifier.fillMaxSize().padding(24.dp),
-            contentAlignment = Alignment.CenterEnd,
+            contentAlignment = if (beside) Alignment.CenterEnd else floatingPosition.toAlignment(),
         ) {
             Box(
                 modifier = Modifier
-                    .fillMaxHeight()
-                    .width(420.dp)
+                    .fillMaxHeight(if (beside) 1f else floatingHeightFraction.coerceIn(0.25f, 0.95f))
+                    .width(if (beside) 420.dp else floatingWidthDp.coerceIn(180, 520).dp)
                     .clip(shapes.paneShape)
                     .background(c.surfaceContainer.copy(alpha = opacity))
                     .padding(20.dp),
